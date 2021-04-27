@@ -1,0 +1,5 @@
+bst
+3
+load aspell_wordlist.txt
+max
+min
