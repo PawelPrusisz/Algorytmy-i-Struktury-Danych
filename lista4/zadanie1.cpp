@@ -870,43 +870,45 @@ vector<string> loadFromFile(string fileName)
     string line;
 	if(fileName == "aspell_wordlist.txt")
 	{
+		int num = 0;
 		if(myFile.is_open())
-    {
-        while(getline(myFile, line))
-        {
-			while(line.size() > 0 && !isalpha(line[0]))
+		{
+			while(getline(myFile, line))
 			{
-				line = line.substr(1, line.length());
+				bool ok = true;
+				for(int i = 0; i < line.size(); i++)
+				{
+					if(!isalpha(line[i]))
+					{
+						ok = false;
+						break;
+					}
+				}
+				
+				if(line.size() > 0 && ok)
+				{
+					out.push_back(line);
+					num++;
+				}
+				//if(num >= 70000) break;
 			}
-			
-			while(line.size() > 0 && !isalpha(line[line.length()-1]))
-			{
-				line = line.substr(0, line.length()-1);
-			}
-
-			if(line.size() > 0)
-			{
-				out.push_back(line);
-			}
-        }
-    }
+		}
 	}
     else if(myFile.is_open())
     {
         while(getline(myFile, line, ' '))
         {
-			cout<<line<<"\n\nXD!";
-			while(line.size() > 0 && !isalpha(line[0]))
+			bool ok = true;
+			for(int i = 0; i < line.size(); i++)
 			{
-				line = line.substr(1, line.length());
-			}
-			
-			while(line.size() > 0 && !isalpha(line[line.length()-1]))
-			{
-				line = line.substr(0, line.length()-1);
+				if(!isalpha(line[i]))
+				{
+					ok = false;
+					break;
+				}
 			}
 
-			if(line.size() > 0)
+			if(line.size() > 0 && ok)
 			{
 				out.push_back(line);
 			}
@@ -937,7 +939,7 @@ int main()
     cin>>n;
 
 	using namespace std::chrono;
-
+	vector<string> fromFile;
 	
 	//0 - insert
 	//1 - delete
@@ -975,16 +977,13 @@ int main()
 				high_resolution_clock::time_point tStart = high_resolution_clock::now();
                 string fileName = "";
                 cin>>fileName;
-                vector<string> fromFile;
                 fromFile = loadFromFile(fileName);
 				srand(time(0));
-				//random_shuffle(fromFile.begin(), fromFile.end());
                 for(string i : fromFile)
                 {
                     tree.insert(i);
 					inserts++;
 					curElements++;
-					if(inserts%1000 == 0)cerr<<inserts<<"\n";
                 }
 				if(curElements > maxElements)maxElements = curElements;
 				high_resolution_clock::time_point tEnd = high_resolution_clock::now();

@@ -1,11 +1,26 @@
 #include<bits/stdc++.h>
-
+#include <ctime>
+#include <ratio>
+#include <chrono>
 using namespace std;
 
-//ToDo : successor BST
-//ToDo : "First" < "a" ????
-//ToDo : RBT testing
-//ToDo : splay testing
+vector<double> Timing(5, 0.0);
+int m = 1000;
+
+long long maxElements = 0;
+long long curElements = 0;
+long long compares = 0;
+long long inserts = 0;
+long long deletes = 0;
+long long finds = 0;
+long long mins = 0;
+long long maxs = 0;
+long long successors = 0;
+long long inorders = 0;
+
+
+//ToDo : wypisz czas wywolania funkcji i porownania dla kadego rodzaju drzewa :((((
+
 //BST Tree
 //--------------------------------------------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -24,6 +39,7 @@ class BST {
 
     node* root;
 
+
     node* makeEmpty(node* t) {
         if(t == NULL)
             return NULL;
@@ -37,8 +53,10 @@ class BST {
 
     node* insert(string x, node* t)
     {
+		compares++;
         if(t == NULL)
         {
+			compares--;
             t = new node;
             t->data = x;
             t->left = t->right = NULL;
@@ -50,31 +68,18 @@ class BST {
         return t;
     }
 
-    node* successor(node* t, node* n)
+    void successor(node* t)
     {
-        if(n->right != NULL)
-            return findMin(n->right);
-        node* p = NULL;
-        while(t != NULL)
-        {
-            cout<<n->data<<" "<<t->data<<" ";
-            if(n->data.compare(t->data) < 0)
-            {
-                p = t;
-                t = t->left;
-                cout<<1<<"\n";
-            }
-            else if(n->data.compare(t->data) > 0)
-            {
-                t = t->right;
-                cout<<1<<"\n";
-            }
-                
-            else
-                break;
-        }
-
-        return p;
+        if(t)
+		{
+			if(t->right)
+			{
+				node* n = findMin(t->right);
+				cout<<n->data;
+			}
+			
+		}
+		cout<<"\n";
     }
 
     node* findMin(node* t)
@@ -100,12 +105,17 @@ class BST {
         node* temp;
         if(t == NULL)
             return NULL;
-        else if(x < t->data)
-            t->left = remove(x, t->left);
-        else if(x > t->data)
-            t->right = remove(x, t->right);
+        else if(x < t->data){
+			t->left = remove(x, t->left);
+			compares++;
+		}
+        else if(x > t->data){
+			t->right = remove(x, t->right);
+			compares+=2;
+		}
         else if(t->left && t->right)
         {
+			compares+=3;
             temp = findMin(t->right);
             t->data = temp->data;
             t->right = remove(t->data, t->right);
@@ -134,41 +144,62 @@ class BST {
     node* find(node* t, string x) {
         if(t == NULL)
             return NULL;
-        else if(x < t->data)
-            return find(t->left, x);
-        else if(x > t->data)
-            return find(t->right, x);
-        else
-            return t;
+        else if(x < t->data){
+			compares++;
+			return find(t->left, x);
+		}
+            
+        else if(x > t->data){
+			compares+=2;
+			return find(t->right, x);
+		}
+        else{
+			compares+=2;
+			return t;
+		}
+            
     }
 
 public:
+
     BST() {
         root = NULL;
     }
 
     ~BST() {
-        root = makeEmpty(root);
+        delocate(root);
+    }
+
+    void delocate(node* t) {
+        if(!t) return;
+        delocate(t->right);
+        delocate(t->left);
+        if(!t)
+            delete t;
     }
 
     void insert(string x) {
         root = insert(x, root);
     }
 
-    void remove(string x) {
-        root = remove(x, root);
+    node* remove(string x) {
+		deletes++;
+		node* a = find(root, x);
+        if(a != NULL){
+            curElements--;
+			root = remove(x, root);
+		}
     }
 
     void display() {
         inorder(root);
-        cout << "\n";
     }
 
     void min() {
         auto a = findMin(root);
         if(a != NULL)
         {
-            cout<<"Min: "<<a->data;
+            cout<<a->data;
         }
         cout<<"\n";
     }
@@ -178,7 +209,7 @@ public:
         node* a = findMax(root);
         if(a != NULL)
         {
-            cout<<"Max: "<<a->data;
+            cout<<a->data;
         }
         cout<<"\n";
         
@@ -193,12 +224,7 @@ public:
     }
 
     void successor(string x) {
-        node* a = successor(root, find(root, x));
-        if(root != NULL)
-        {
-            cout<<root->data;
-        }
-        cout<<"\n";
+        successor(find(root, x));
     }
 };
 
@@ -211,351 +237,378 @@ public:
 //--------------------------------------------------------------------------------------------------------------------------------------
 
 
-class RB_TREE {
+class RBTree {
+private:
 
-    struct node {
-    string data{};
-    node* left = nullptr;
-    node* right = nullptr;
-    node* parent = nullptr;
-    string color;
+    struct Node {
+        string data; 
+        Node *parent;
+        Node *left;
+        Node *right;
+        int color;
     };
+    
+	Node* root;
+	Node* TNULL;
 
-    node* root;
+	void initializeNULLNode(Node* node, Node* parent) {
+		node->data = "";
+		node->parent = parent;
+		node->left = nullptr;
+		node->right = nullptr;
+		node->color = 0;
+	}
 
-    public:
-        RB_TREE() : root(nullptr) {}
+	void inOrderHelper(Node* node) {
+		if (node != TNULL) {
+			inOrderHelper(node->left);
+			cout<<node->data<<" ";
+			inOrderHelper(node->right);
+		} 
+	}
 
-        node* GetRoot(){ return root; }
+	Node* searchTreeHelper(Node* node, string key) {
+		compares++;
+		if (node == TNULL || key == node->data) {
+			return node;
+		}
+		compares++;
+		if (key < node->data) {
+			return searchTreeHelper(node->left, key);
+		} 
+		return searchTreeHelper(node->right, key);
+	}
 
-         void InsertNode(string stuff) {
-           if(root == nullptr){
-               root = new node();
-               root->data = stuff;
-               root->parent = nullptr;
-               root->color = "BLACK";
-               cout << "Element inserted.\n";
-           }
-           else {
-               auto linker = GetRoot();
-               node* newnode = new node();
-               newnode->data = stuff;
+	void fixDelete(Node* x) {
+		Node* s;
+		while (x != root && x->color == 0) {
+			if (x == x->parent->left) {
+				s = x->parent->right;
+				if (s->color == 1) {
+					s->color = 0;
+					x->parent->color = 1;
+					leftRotate(x->parent);
+					s = x->parent->right;
+				}
 
-               while(linker != nullptr){
-                   if(linker->data.compare(stuff) < 0){
-                       if(linker->left == nullptr){
-                           linker->left = newnode;
-                           newnode->color = "RED";
-                           newnode->parent = linker;
-                           cout << "Element inserted.\n"; break; }
-                       else { linker = linker->left; }
-                   } else {
-                       if(linker->right == nullptr){
-                           linker->right = newnode;
-                           newnode->color = "RED";
-                           newnode->parent = linker;
-                           cout << "Element inserted.\n"; break; }
-                       else {  linker = linker->right; }
-                   }
-               }
-            RB_Insert_Fixup(newnode);
-           }
-        }
+				if (s->left->color == 0 && s->right->color == 0) {
+					s->color = 1;
+					x = x->parent;
+				} else {
+					if (s->right->color == 0) {
+						s->left->color = 0;
+						s->color = 1;
+						rightRotate(s);
+						s = x->parent->right;
+					} 
 
-        void RB_Insert_Fixup(node* z) {
-            while(z->parent->color == "RED") {
-                auto grandparent = z->parent->parent;
-                auto uncle = GetRoot();
-                if(z->parent == grandparent->left) {
-                    if(grandparent->right) { uncle = grandparent->right; }
-                    if(uncle->color == "RED"){
-                        z->parent->color = "BLACK";
-                        uncle->color = "BLACK";
-                        grandparent->color = "RED";
-                        if(grandparent->data.compare(root->data) != 0){ z = grandparent; }
-                        else { break; }
-                    }
-                    else if(z == grandparent->left->right) {
-                       LeftRotate(z->parent);
-                    }
-                    else {
-                        z->parent->color = "BLACK";
-                        grandparent->color = "RED";
-                        RightRotate(grandparent);
-                        if(grandparent->data.compare(root->data) != 0){ z = grandparent; }
-                        else { break; }
-                    }
-                }
-                else {
-                    if(grandparent->left) { uncle = grandparent->left; }
-                    if(uncle->color == "RED"){
-                        z->parent->color = "BLACK";
-                        uncle->color = "BLACK";
-                        grandparent->color = "RED";
-                        if(grandparent->data.compare(root->data) != 0){ z = grandparent; }
-                        else { break; }
-                    }
-                    else if(z == grandparent->right->left){
-                        RightRotate(z->parent);
-                    }
-                    else {
-                        z->parent->color = "BLACK";
-                        grandparent->color = "RED";
-                        LeftRotate(grandparent);
-                        if(grandparent->data.compare(root->data) != 0){ z = grandparent; }
-                        else { break; }
-                    }
-                }
-            }
-            root->color = "BLACK";
-        }
+					s->color = x->parent->color;
+					x->parent->color = 0;
+					s->right->color = 0;
+					leftRotate(x->parent);
+					x = root;
+				}
+			} else {
+				s = x->parent->left;
+				if (s->color == 1) {
+					s->color = 0;
+					x->parent->color = 1;
+					rightRotate(x->parent);
+					s = x->parent->left;
+				}
+
+				if (s->right->color == 0 && s->right->color == 0) {
+					s->color = 1;
+					x = x->parent;
+				} else {
+					if (s->left->color == 0) {
+						s->right->color = 0;
+						s->color = 1;
+						leftRotate(s);
+						s = x->parent->left;
+					} 
+
+					s->color = x->parent->color;
+					x->parent->color = 0;
+					s->left->color = 0;
+					rightRotate(x->parent);
+					x = root;
+				}
+			} 
+		}
+		x->color = 0;
+	}
 
 
-        void RemoveNode(node* parent, node* curr, string stuff) {
-            if(curr == nullptr) { return; }
-            cout<<"b";
-            if(curr->data.compare(stuff) == 0) {
-                //CASE -- 1
-                if(curr->left == nullptr && curr->right == nullptr) {
-                    cout<<"1";
-                    if(parent->data.compare(curr->data) == 0){ root = nullptr; }
-                    else if(parent->right == curr) {
-                        RB_Delete_Fixup(curr);
-                        parent->right = nullptr;
-                    } 
-                    else { 
-                        RB_Delete_Fixup(curr);
-                        parent->left = nullptr;
-                    }
-                }
-                //CASE -- 2
-                else if(curr->left != nullptr && curr->right == nullptr) {
-                    cout<<"2.1";
-                    string swap = curr->data;
-                    curr->data = curr->left->data;
-                    curr->left->data = swap;
-                    RemoveNode(curr, curr->right, stuff);
-                }
-                else if(curr->left == nullptr && curr->right != nullptr) {
-                    cout<<"2.2";
-                    string swap = curr->data;
-                    curr->data = curr->right->data;
-                    curr->right->data = swap;
-                    RemoveNode(curr, curr->right, stuff);
-                }
-                //CASE -- 3
-                else {
-                    cout<<"3";
-                    bool flag = false;
-                    node* temp = curr->right;
-                    while(temp->left) { flag = true; parent = temp; temp = temp->left; }
-                    if(!flag) { parent = curr; }
-                    string swap = curr->data;
-                    curr->data = temp->data;
-                    temp->data = swap;
-                    RemoveNode(parent, temp, swap);
-                }
-                cout<<"c";
-            }
-        }
+	void rbTransplant(Node* u, Node* v){
+		if (u->parent == nullptr) {
+			root = v;
+		} else if (u == u->parent->left){
+			u->parent->left = v;
+		} else {
+			u->parent->right = v;
+		}
+		v->parent = u->parent;
+	}
 
-        void Remove(string stuff) {
-            node* temp = root;
-            node* parent = temp;
-            bool flag = false;
-            if(!temp) { RemoveNode(nullptr, nullptr, stuff); }
-            cout<<"debug\n\n";
-            while(temp) {
-                cout<<"a";
-                string a;
-                cin>>a;
-                if(stuff.compare(temp->data) == 0) { 
-                    flag = true;
-                    RemoveNode(parent, temp, stuff);
-                    break;
-                }
-                else if(stuff.compare(temp->data) < 0) {
-                    parent = temp;
-                    temp = temp->left;
-                }
-                else { parent = temp ; temp = temp->right; }
-            }
-            cout<<"\n";
-            if(!flag) { cout << "\nElement doesn't exist in the table"; }
-        }
+	void deleteNodeHelper(Node* node, string key) {
+		Node* z = TNULL;
+		Node* x, *y;
+		while (node != TNULL){
+			compares++;
+			if (node->data == key) {
+				z = node;
+			}
+			compares++;
+			if (compares++ > -1 && node->data <= key) {
+				node = node->right;
+			} else {
+				node = node->left;
+			}
+		}
 
-        void RB_Delete_Fixup(node* z) { 
-            while(z->data.compare(root->data) !=0 && z->color == "BLACK") {
-                auto sibling = GetRoot();
-                if(z->parent->left == z) {
-                    if(z->parent->right){ sibling = z->parent->right; }
-                    if(sibling) {
-                        //CASE -- 1
-                        if(sibling->color == "RED") {
-                            sibling->color = "BLACK";
-                            z->parent->color = "RED";
-                            LeftRotate(z->parent);
-                            sibling = z->parent->right;
-                        }
-                         //CASE -- 2
-                        if(sibling->left == nullptr && sibling->right == nullptr) {
-                            sibling->color = "RED";
-                            z = z->parent;
-                        }
-                        else if(sibling->left->color == "BLACK" && sibling->right->color == "BLACK") {
-                            sibling->color = "RED";
-                            z = z->parent;
-                        }
-                        //CASE -- 3
-                        else if(sibling->right->color == "BLACK") {
-                            sibling->left->color = "BLACK";
-                            sibling->color = "RED";
-                            RightRotate(sibling);
-                            sibling = z->parent->right;
-                        } else {
-                            sibling->color = z->parent->color;
-                            z->parent->color = "BLACK";
-                            if(sibling->right){ sibling->right->color = "BLACK"; }
-                            LeftRotate(z->parent);
-                            z = root;
-                        }
-                    } 
-                } else {
-                    if(z->parent->right == z){
-                        if(z->parent->left){ sibling = z->parent->left; }
-                        if(sibling) {
-                            //CASE -- 1
-                            if(sibling->color == "RED"){
-                                sibling->color = "BLACK";
-                                z->parent->color = "RED";
-                                RightRotate(z->parent);
-                                sibling = z->parent->left;
-                            }
-                            //CASE -- 2
-                             if(sibling->left == nullptr && sibling->right == nullptr) {
-                                sibling->color = "RED";
-                                z = z->parent;
-                            }
-                            else if(sibling->left->color == "BLACK" && sibling->right->color == "BLACK") {
-                                sibling->color = "RED";
-                                z = z->parent;
-                            }
-                            //CASE -- 3 
-                            else if(sibling->left->color == "BLACK") {
-                                sibling->right->color = "BLACK";
-                                sibling->color = "RED";
-                                RightRotate(sibling);
-                                sibling = z->parent->left;
-                            } else {
-                                sibling->color = z->parent->color;
-                                z->parent->color = "BLACK";
-                                if(sibling->left){ sibling->left->color = "BLACK"; }
-                                LeftRotate(z->parent);
-                                z = root;
-                            }
-                        } 
-                    }
+		if (z == TNULL) {
+			cout<<"Couldn't find key in the tree"<<endl;
+			return;
+		} 
 
-                }
-            }
-            z->color = "BLACK";
-        }
+		y = z;
+		int y_original_color = y->color;
+		if (z->left == TNULL) {
+			x = z->right;
+			rbTransplant(z, z->right);
+		} else if (z->right == TNULL) {
+			x = z->left;
+			rbTransplant(z, z->left);
+		} else {
+			y = minimum(z->right, false);
+			y_original_color = y->color;
+			x = y->right;
+			if (y->parent == z) {
+				x->parent = y;
+			} else {
+				rbTransplant(y, y->right);
+				y->right = z->right;
+				y->right->parent = y;
+			}
 
-        node* TreeSearch(string stuff) {
-            auto temp = GetRoot();
-            if(temp == nullptr) { return nullptr; }
+			rbTransplant(z, y);
+			y->left = z->left;
+			y->left->parent = y;
+			y->color = z->color;
+		}
+		delete z;
+		if (y_original_color == 0){
+			fixDelete(x);
+		}
+	}
+	
+	void fixInsert(Node* k){
+		Node* u;
+		while (k->parent->color == 1) {
+			if (k->parent == k->parent->parent->right) {
+				u = k->parent->parent->left;
+				if (u->color == 1) {
+					u->color = 0;
+					k->parent->color = 0;
+					k->parent->parent->color = 1;
+					k = k->parent->parent;
+				} else {
+					if (k == k->parent->left) {
+						k = k->parent;
+						rightRotate(k);
+					}
+					k->parent->color = 0;
+					k->parent->parent->color = 1;
+					leftRotate(k->parent->parent);
+				}
+			} else {
+				u = k->parent->parent->right;
 
-            while(temp) {
-                if(stuff.compare(temp->data) == 0){ return temp; }
-                else if(stuff.compare(temp->data) < 0){ temp = temp->left; }
-                else { temp = temp->right; }
-            }
-            return nullptr;
-        }
+				if (u->color == 1) {
+					u->color = 0;
+					k->parent->color = 0;
+					k->parent->parent->color = 1;
+					k = k->parent->parent;	
+				} else {
+					if (k == k->parent->right) {
+						k = k->parent;
+						leftRotate(k);
+					}
+					k->parent->color = 0;
+					k->parent->parent->color = 1;
+					rightRotate(k->parent->parent);
+				}
+			}
+			if (k == root) {
+				break;
+			}
+		}
+		root->color = 0;
+	}
 
-         void LeftRotate(node* x) {
-            node* nw_node = new node();
-            if(x->right->left) { nw_node->right = x->right->left; }
-            nw_node->left = x->left;
-            nw_node->data = x->data;
-            nw_node->color = x->color;
-            x->data = x->right->data;
+public:
 
-            x->left = nw_node;
-            if(nw_node->left){ nw_node->left->parent = nw_node; }
-            if(nw_node->right){ nw_node->right->parent = nw_node; }
-            nw_node->parent = x;
+    
 
-            if(x->right->right){ x->right = x->right->right; }
-            else { x->right = nullptr; }
+	RBTree() {
+		TNULL = new Node;
+		TNULL->color = 0;
+		TNULL->left = nullptr;
+		TNULL->right = nullptr;
+		root = TNULL;
+		
+	}
 
-            if(x->right){ x->right->parent = x; }
-        }
+	void inorder() {
+		inOrderHelper(this->root);
+	}
 
-        void RightRotate(node* x) {
-            node* nw_node = new node();
-            if(x->left->right){ nw_node->left = x->left->right; }
-            nw_node->right = x->right;
-            nw_node->data = x->data;
-            nw_node->color = x->color;
+	Node* searchTree(string k, bool w) {
+		Node* node = searchTreeHelper(this->root, k);
+		if(w)
+		{
+			if(node != TNULL) cout<<1<<"\n";
+			else cout<<0<<"\n";
+		}
+		
+		return node;
+	}
 
-            x->data = x->left->data;
-            x->color = x->left->color;
+	Node* minimum(Node* node, bool w) {
+		if(root != TNULL)
+		{
+			while (node->left != TNULL) {
+				node = node->left;
+			}
+			if(w)cout<<node->data<<"\n";
+			return node;
+		}
+		else if(w)cout<<"\n";
+		
+	}
 
-            x->right = nw_node;
-            if(nw_node->left){ nw_node->left->parent = nw_node; }
-            if(nw_node->right){ nw_node->right->parent = nw_node; }
-            nw_node->parent = x;
+	Node* maximum(Node* node, bool w) {
+		if(root != TNULL)
+		{
+			while (node->right != TNULL) {
+				node = node->right;
+			}
+			if(w)cout<<node->data<<"\n";
+			return node;
+		}
+		else if(w)cout<<"\n";
+	}
 
-            if(x->left->left){ x->left = x->left->left; }
-            else { x->left = nullptr; }
+	Node* successor(Node* x) {
+		if (x->right != TNULL) {
+			return minimum(x->right, false);
+		}
 
-            if(x->left){ x->left->parent = x; }
-        }
+		Node* y = x->parent;
+		while (y != TNULL && x == y->right) {
+			x = y;
+			y = y->parent;
+		}
+		return y;
+	}
 
-        void InorderTraversal(node* temp) {
-            if(!temp){ return; }
-            
-            InorderTraversal(temp->left);
-            cout << temp->data << "<" << temp->color << "> ";
-            InorderTraversal(temp->right);
-        }
+	void leftRotate(Node* x) {
+		Node* y = x->right;
+		x->right = y->left;
+		if (y->left != TNULL) {
+			y->left->parent = x;
+		}
+		y->parent = x->parent;
+		if (x->parent == nullptr) {
+			this->root = y;
+		} else if (x == x->parent->left) {
+			x->parent->left = y;
+		} else {
+			x->parent->right = y;
+		}
+		y->left = x;
+		x->parent = y;
+	}
 
-        void InorderTraversal() {
-            node* temp = root;
-            if(!temp){ return; }
-            
-            InorderTraversal(temp->left);
-            cout<< temp->data << "<" << temp->color << "> ";
-            InorderTraversal(temp->right);
-        }
+	void rightRotate(Node* x) {
+		Node* y = x->left;
+		x->left = y->right;
+		if (y->right != TNULL) {
+			y->right->parent = x;
+		}
+		y->parent = x->parent;
+		if (x->parent == nullptr) {
+			this->root = y;
+		} else if (x == x->parent->right) {
+			x->parent->right = y;
+		} else {
+			x->parent->left = y;
+		}
+		y->right = x;
+		x->parent = y;
+	}
 
-        void Minimum(node* temp) {
-            if(!temp->left)cout << temp->data << "<" << temp->color << ">\n";
-            else Minimum(temp->left);
-        }
-        void Minimum() {
-            if(root){
-                node* temp = root;
-                if(!temp->left)cout << temp->data << "<" << temp->color << ">\n";
-                else Minimum(temp->left);
-            }
-            else cout<<"\n";
-        }
+	void insert(string key) {
+		Node* node = new Node;
+		node->parent = nullptr;
+		node->data = key;
+		node->left = TNULL;
+		node->right = TNULL;
+		node->color = 1;
+		Node* y = nullptr;
+		Node* x = this->root;
 
-        void Maximum(node* temp) {
-            if(!temp->right)cout << temp->data << "<" << temp->color << ">\n";
-            else Maximum(temp->left);
-        }
-        void Maximum() {
-            if(root){
-                node* temp = root;
-                if(!temp->right)cout << temp->data << "<" << temp->color << ">\n";
-                else Maximum(temp->left);
-            }
-            else cout<<"\n";
-        }
- };
+		while (x != TNULL) {
+			y = x;
+			compares++;
+			if (node->data < x->data) {
+				x = x->left;
+			} else {
+				x = x->right;
+			}
+		}
+
+		node->parent = y;
+		if (y == nullptr) {
+			root = node;
+		} else if (node->data < y->data) {
+			compares++;
+			y->left = node;
+		} else {
+			compares++;
+			y->right = node;
+		}
+
+		if (node->parent == nullptr){
+			node->color = 0;
+			return;
+		}
+
+		if (node->parent->parent == nullptr) {
+			return;
+		}
+
+		fixInsert(node);
+	}
+
+	Node* getRoot(){
+		return this->root;
+	}
+
+	void deleteNode(string data) {
+		Node* node = searchTree(data, false);
+		deletes++;
+		if(node) {
+			deleteNodeHelper(this->root, data);
+			curElements--;
+		}
+		
+	}
+
+	
+
+};
 
 //splay Tree
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -587,10 +640,11 @@ private:
 	}
 
 	Node* searchTreeHelper(Node* node, string key) {
+		compares++;
 		if (node == nullptr || key == node->data) {
 			return node;
 		}
-
+		compares++;
 		if (key.compare(node->data) < 0) {
 			return searchTreeHelper(node->left, key);
 		} 
@@ -600,11 +654,13 @@ private:
 	void deleteNodeHelper(Node* node, string key) {
 		Node* x = nullptr;
 		Node* t, *s;
+		
 		while (node != nullptr){
+			compares++;
 			if (node->data == key) {
 				x = node;
 			}
-
+			compares++;
 			if (node->data.compare(key) <=0) {
 				node = node->right;
 			} else {
@@ -613,7 +669,6 @@ private:
 		}
 
 		if (x == nullptr) {
-			cout<<"Couldnt find key in the tree"<<endl;
 			return;
 		}
 		split(x, s, t);
@@ -698,7 +753,7 @@ private:
         if(!t){
             return s;
         }
-        Node* x = maximum(s);
+        Node* x = maximum(s, false);
         splay(x);
         x->right = t;
         t->parent = x;
@@ -735,33 +790,33 @@ public:
 		return x;
 	}
 
-	Node* minimum(Node* node) {
+	Node* minimum(Node* node, bool w) {
         if(root){
             while (node->left != nullptr) {
                 node = node->left;
             }
-            cout<<node->data<<"\n";
+            if(w)cout<<node->data<<"\n";
             return node;
         }
-        else cout<<"\n";
+        else if(w)cout<<"\n";
 	}
 
-	Node* maximum(Node* node) {
+	Node* maximum(Node* node, bool w) {
         if(root)
         {
             while (node->right != nullptr) {
 			    node = node->right;
 		    }
-            cout<<node->data<<"\n";
+            if(w)cout<<node->data<<"\n";
 		    return node;
         }
-		else cout<<"\n";
+		else if(w)cout<<"\n";
 	}
 
 	Node* successor(Node* x) {
 		
 		if (x->right != nullptr) {
-			return minimum(x->right);
+			return minimum(x->right, false);
 		}
 
 		Node* y = x->parent;
@@ -783,6 +838,7 @@ public:
 
 		while (x != nullptr) {
 			y = x;
+			compares++;
 			if (node->data.compare(x->data) < 0) {
 				x = x->left;
 			} else {
@@ -807,36 +863,98 @@ public:
 	}
 
 	void deleteNode(string data) {
-		deleteNodeHelper(this->root, data);
+		deletes++;
+		Node* node = searchTree(data);
+		if(node){
+			deleteNodeHelper(this->root, data);
+			curElements--;
+		}
 	}
 
 };
 
-vector<string> loadFromFile(string fileName)
+vector<string> loadFromFile(string fileName, int start, int end)
 {
     vector<string> out;
     ifstream myFile (fileName);
     string line;
-    if(myFile.is_open())
+	if(fileName == "aspell_wordlist.txt")
+	{
+		int num = 0;
+		if(myFile.is_open())
+		{
+			while(getline(myFile, line))
+			{
+				bool ok = true;
+				for(int i = 0; i < line.size(); i++)
+				{
+					if(!isalpha(line[i]))
+					{
+						ok = false;
+						break;
+					}
+				}
+				
+				if(line.size() > 0 && ok)
+				{
+                    num++;
+                    if(num > start && num<= end)
+					    out.push_back(line);
+					
+				}
+			}
+		}
+	}
+    else if(myFile.is_open())
     {
         while(getline(myFile, line, ' '))
         {
-            while(!isalpha(line[0]))
-            {
-                line = line.substr(1, line.length());
-            }
-            while(!isalpha(line[line.length()-1]))
-            {
-                line = line.substr(0, line.length()-1);
-            }
-            out.push_back(line);
+			bool ok = true;
+			for(int i = 0; i < line.size(); i++)
+			{
+				if(!isalpha(line[i]))
+				{
+					ok = false;
+					break;
+				}
+			}
+
+			if(line.size() > 0 && ok)
+			{
+				out.push_back(line);
+			}
         }
     }
     else
     {
         cout<<"nieprawidlowa nazwa pliku\n";
     }
+    random_shuffle(out.begin(), out.end());
     return out;
+}
+vector<vector<double>> resoults(69, vector<double>(6, 0.0));
+void coutTime(int num)
+{
+    int index = num/1000 -1;
+    
+    resoults[index][0] += (Timing[0]*1000000/inserts)/m;
+    resoults[index][1] += (Timing[1]*1000000/deletes)/m;
+    resoults[index][2] += (Timing[2]*1000000/finds)/m;
+    resoults[index][3] += (Timing[3]*1000000/mins)/m;
+    resoults[index][4] += (Timing[4]*1000000/maxs)/m;
+    resoults[index][5] += (Timing[5]*1000000/successors)/m;
+    Timing[0] = 0.0;
+    Timing[1] = 0.0;
+    Timing[2] = 0.0;
+    Timing[3] = 0.0;
+    Timing[4] = 0.0;
+    Timing[5] = 0.0;
+    inserts = 0;
+    deletes = 0;
+    finds = 0;
+    mins= 0;
+    maxs = 0;
+    successors = 0;
 }
 
 // main
@@ -855,185 +973,313 @@ int main()
     cin>>type;
     int n;
     cin>>n;
+    srand(time(0));
+	using namespace std::chrono;
+	vector<string> fromFile;
+	
+	//0 - insert
+	//1 - delete
+	//2 - find
+	//3 - min
+	//4 - max
+	//5 - successor
+	//6 - inorder
+	//all in ms
+	
+    int curNum = 0;
+    int step = 1000;
     // Binary-Search Tree
-    if(type == "bst")
+    string comand = "";
+    cin>>comand;
+    vector<string> instructions;
+    while(comand != "end")
     {
-        BST tree;
-        string intent = "";
+        instructions.push_back(comand);
+        cin>>comand;
+    }
+    //for(int i = 0; i < instructions.size(); i++)cerr<<instructions[i]<<" ";
+    for(int rep = 0; rep < m; rep++)
+    {
+        cerr<<rep<<"\n";
+        if(type == "bst")
+        {
+            BST tree;
+            string intent = "";
 
-        for(int i = 0; i < n; i++)
-        {
-            cin>>intent;
-            if(intent == "insert")
+            for(int i = 0; i < instructions.size(); i++)
             {
-                string param;
-                cin>>param;
-                tree.insert(param);
-            }
-            if(intent == "load")
-            {
-                string fileName = "";
-                cin>>fileName;
-                vector<string> fromFile;
-                fromFile = loadFromFile(fileName);
-                for(string i : fromFile)
+                intent =instructions[i];
+                if(intent == "end")break;
+                
+                if(intent == "load")
                 {
-                    tree.insert(i);
+                    if(curNum > 0)coutTime(curNum);
+                    string fileName = "";
+                    i++;
+                    fileName = instructions[i];
+                    fromFile = loadFromFile(fileName, curNum, curNum+step);
+                    curNum+=step;
+                    
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    //random_shuffle(fromFile.begin(), fromFile.end());
+                    for(string i : fromFile)
+                    {
+                        tree.insert(i);
+                        inserts++;
+                        curElements++;
+                    }
+                    cerr<<i<<" ";
+                    if(curElements > maxElements)maxElements = curElements;
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[0] += timePass.count()*1000;
+                }
+                if(intent == "delete")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    int r = rand()%fromFile.size();
+                    string param = fromFile[r];
+                    tree.remove(param);
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[1] += timePass.count()*1000;
+                }
+                if(intent == "find")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    finds++;
+                    int r = rand()%fromFile.size();
+                    string param = fromFile[r];
+                    tree.search(param);
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[2] += timePass.count()*1000;
+                }
+                if(intent == "min")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    tree.min();
+                    mins++;
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[3] += timePass.count()*1000;
+                }
+                if(intent == "max")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    tree.max();
+                    maxs++;
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[4] += timePass.count()*1000;
+                }
+                if(intent == "successor")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    int r = rand()%fromFile.size();
+                    string param = fromFile[r];
+                    tree.successor(param);
+                    successors++;
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[5] += timePass.count()*1000;
                 }
             }
-            if(intent == "delete")
-            {
-                string param;
-                cin>>param;
-                tree.remove(param);
-            }
-            if(intent == "find")
-            {
-                string param;
-                cin>>param;
-                tree.search(param);
-            }
-            if(intent == "min")
-            {
-                tree.min();
-            }
-            if(intent == "max")
-            {
-                tree.max();
-            }
-            if(intent == "successor")
-            {
-                string param;
-                cin>>param;
-                tree.successor(param);
-            }
-            if(intent == "inorder")
-            {
-                tree.display();
-            }
+            tree.~BST();
         }
-    }
-    // Red-Black Tree
-    else if(type == "rbt")
-    {
-        RB_TREE tree;
-        string intent = "";
-        for(int i = 0; i < n; i++)
+        // Red-Black Tree
+        else if(type == "rbt")
         {
-            cin>>intent;
-            if(intent == "insert")
+            RBTree tree;
+            string intent = "";
+            for(int i = 0; i < instructions.size(); i++)
             {
-                string param;
-                cin>>param;
-                tree.InsertNode(param);
-            }
-            if(intent == "load")
-            {
-                string fileName = "";
-                cin>>fileName;
-                vector<string> fromFile;
-                fromFile = loadFromFile(fileName);
-                for(string i : fromFile)
+                intent =instructions[i];
+                if(intent == "load")
                 {
-                    tree.InsertNode(i);
+                    if(curNum > 0)coutTime(curNum);
+                    string fileName = "";
+                    i++;
+                    fileName = instructions[i];
+                    fromFile = loadFromFile(fileName, curNum, curNum+step);
+                    curNum+=step;
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    for(string i : fromFile)
+                    {
+                        tree.insert(i);
+                        inserts++;
+                        curElements++;
+                    }
+                    if(curElements > maxElements)maxElements = curElements;
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[0] += timePass.count()*1000;
+                    
+                }
+                if(intent == "delete")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    int r = rand()%fromFile.size();
+                    string param = fromFile[r];
+                    tree.deleteNode(param);
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[1] += timePass.count()*1000;
+                }
+                if(intent == "find")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    finds++;
+                    int r = rand()%fromFile.size();
+                    string param = fromFile[r];
+                    tree.searchTree(param, true);
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[2] += timePass.count()*1000;
+                }
+                if(intent == "min")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    mins++;
+                    tree.minimum(tree.getRoot(), true);
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[3] += timePass.count()*1000;
+                }
+                if(intent == "max")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    maxs++;
+                    tree.maximum(tree.getRoot(), true);
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[4] += timePass.count()*1000;
+                }
+                if(intent == "successor")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    successors++;
+                    int r = rand()%fromFile.size();
+                    string param = fromFile[r];
+                    tree.successor(tree.searchTree(param, false));
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[5] += timePass.count()*1000;
+                }
+            }  
+        }
+        //Splay Tree
+        else if(type == "splay")
+        {
+            SplayTree tree;
+            string intent = "";
+            for(int i = 0; i < instructions.size(); i++)
+            {
+                intent =instructions[i];
+                if(intent == "load")
+                {
+                    
+                    if(curNum > 0)coutTime(curNum);
+                    string fileName = "";
+                    i++;
+                    fileName = instructions[i];
+                    fromFile = loadFromFile(fileName, curNum, curNum+step);
+                    curNum+=step;
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    for(string i : fromFile)
+                    {
+                        tree.insert(i);
+                        inserts++;
+                        curElements++;
+                    }
+                    if(curElements > maxElements) maxElements = curElements;
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[0] += timePass.count()*1000;
+                }
+                if(intent == "delete")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    int r = rand()%fromFile.size();
+                    string param = fromFile[r];
+                    tree.deleteNode(param);
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[1] += timePass.count()*1000;
+                }
+                if(intent == "find")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    finds++;
+                    int r = rand()%fromFile.size();
+                    string param = fromFile[r];
+                    if(tree.searchTree(param))cout<<1<<"\n";
+                    else cout<<0<<"\n";
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[2] += timePass.count()*1000;
+                }
+                if(intent == "min")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    mins++;
+                    tree.minimum(tree.getRoot(), true);
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[3] += timePass.count()*1000;
+                }
+                if(intent == "max")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    maxs++;
+                    tree.maximum(tree.getRoot(), true);
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[4] += timePass.count()*1000;
+                }
+                if(intent == "successor")
+                {
+                    high_resolution_clock::time_point tStart = high_resolution_clock::now();
+                    successors++;
+                    int r = rand()%fromFile.size();
+                    string param = fromFile[r];
+                    tree.successor(tree.searchTree(param));
+                    high_resolution_clock::time_point tEnd = high_resolution_clock::now();
+
+                    duration<double> timePass = duration_cast<duration<double>>(tEnd - tStart);
+                    Timing[5] += timePass.count()*1000;
                 }
             }
-            if(intent == "delete")
-            {
-                string param;
-                cin>>param;
-                tree.Remove(param);
-            }
-            if(intent == "find")
-            {
-                string param;
-                cin>>param;
-                tree.TreeSearch(param);
-            }
-            if(intent == "min")
-            {
-                tree.Minimum();
-            }
-            if(intent == "max")
-            {
-                tree.Maximum();
-            }
-            if(intent == "successor")
-            {
-                //TODO: successor
-                //string param;
-                //cin>>param;
-                //tree.successor(param);
-            }
-            if(intent == "inorder")
-            {
-                tree.InorderTraversal();
-                cout<<"\n";
-            }
         }
-    }
-    //Splay Tree
-    else if(type == "splay")
-    {
-        SplayTree tree;
-        string intent = "";
-        for(int i = 0; i < n; i++)
+        else
         {
-            cin>>intent;
-            if(intent == "insert")
-            {
-                string param;
-                cin>>param;
-                tree.insert(param);
-            }
-            if(intent == "load")
-            {
-                string fileName = "";
-                cin>>fileName;
-                vector<string> fromFile;
-                fromFile = loadFromFile(fileName);
-                for(string i : fromFile)
-                {
-                    tree.insert(i);
-                }
-            }
-            if(intent == "delete")
-            {
-                string param;
-                cin>>param;
-                tree.deleteNode(param);
-            }
-            if(intent == "find")
-            {
-                string param;
-                cin>>param;
-                if(tree.searchTree(param))cout<<1<<"\n";
-                else cout<<0<<"\n";
-            }
-            if(intent == "min")
-            {
-                tree.minimum(tree.getRoot());
-            }
-            if(intent == "max")
-            {
-                tree.maximum(tree.getRoot());
-            }
-            if(intent == "successor")
-            {
-                string param;
-                cin>>param;
-                tree.successor(tree.searchTree(param));
-            }
-            if(intent == "inorder")
-            {
-                tree.inorder();
-                cout<<"\n";
-            }
+            cout<<"nieprawidlowy typ drzewa, nie rozpoznano typu "<<type<<"\n";
         }
     }
-    else
+    for(int i = 0; i < resoults.size(); i++)
     {
-        cout<<"nieprawidlowy typ drzewa, nie rozpoznano typu "<<type<<"\n";
+        for(int j = 0; j < resoults[i].size(); j++)
+        {
+            cerr<<resoults[i][j]<<";";
+        }
+        cerr<<"\n";
     }
     return 0;
 }
