@@ -4,8 +4,8 @@
 #include <chrono>
 using namespace std;
 
-vector<double> Timing(5, 0.0);
-int m = 1000;
+vector<float> Timing(5, 0.0);
+int m = 100;
 
 long long maxElements = 0;
 long long curElements = 0;
@@ -164,18 +164,6 @@ public:
 
     BST() {
         root = NULL;
-    }
-
-    ~BST() {
-        delocate(root);
-    }
-
-    void delocate(node* t) {
-        if(!t) return;
-        delocate(t->right);
-        delocate(t->left);
-        if(!t)
-            delete t;
     }
 
     void insert(string x) {
@@ -876,6 +864,7 @@ public:
 vector<string> loadFromFile(string fileName, int start, int end)
 {
     vector<string> out;
+	fileName = "lotr.txt";
     ifstream myFile (fileName);
     string line;
 	if(fileName == "aspell_wordlist.txt")
@@ -907,22 +896,26 @@ vector<string> loadFromFile(string fileName, int start, int end)
 	}
     else if(myFile.is_open())
     {
+		int num = 0;
         while(getline(myFile, line, ' '))
         {
 			bool ok = true;
-			for(int i = 0; i < line.size(); i++)
-			{
-				if(!isalpha(line[i]))
+				for(int i = 0; i < line.size(); i++)
 				{
-					ok = false;
-					break;
+					if(!isalpha(line[i]))
+					{
+						ok = false;
+						break;
+					}
 				}
-			}
-
-			if(line.size() > 0 && ok)
-			{
-				out.push_back(line);
-			}
+				
+				if(line.size() > 0 && ok)
+				{
+                    num++;
+                    if(num > start && num<= end)
+					    out.push_back(line);
+					
+				}
         }
     }
     else
@@ -932,11 +925,10 @@ vector<string> loadFromFile(string fileName, int start, int end)
     random_shuffle(out.begin(), out.end());
     return out;
 }
-vector<vector<double>> resoults(69, vector<double>(6, 0.0));
+vector<vector<float>> resoults(69, vector<float>(6, 0.0));
 void coutTime(int num)
 {
-    int index = num/1000 -1;
-    
+    int index = (num/1000) -1;
     resoults[index][0] += (Timing[0]*1000000/inserts)/m;
     resoults[index][1] += (Timing[1]*1000000/deletes)/m;
     resoults[index][2] += (Timing[2]*1000000/finds)/m;
@@ -986,8 +978,7 @@ int main()
 	//6 - inorder
 	//all in ms
 	
-    int curNum = 0;
-    int step = 1000;
+    
     // Binary-Search Tree
     string comand = "";
     cin>>comand;
@@ -1000,6 +991,8 @@ int main()
     //for(int i = 0; i < instructions.size(); i++)cerr<<instructions[i]<<" ";
     for(int rep = 0; rep < m; rep++)
     {
+		int curNum = 0;
+    	int step = 1000;
         cerr<<rep<<"\n";
         if(type == "bst")
         {
@@ -1021,14 +1014,12 @@ int main()
                     curNum+=step;
                     
                     high_resolution_clock::time_point tStart = high_resolution_clock::now();
-                    //random_shuffle(fromFile.begin(), fromFile.end());
                     for(string i : fromFile)
                     {
                         tree.insert(i);
                         inserts++;
                         curElements++;
                     }
-                    cerr<<i<<" ";
                     if(curElements > maxElements)maxElements = curElements;
                     high_resolution_clock::time_point tEnd = high_resolution_clock::now();
 
@@ -1091,7 +1082,6 @@ int main()
                     Timing[5] += timePass.count()*1000;
                 }
             }
-            tree.~BST();
         }
         // Red-Black Tree
         else if(type == "rbt")
@@ -1275,9 +1265,10 @@ int main()
     }
     for(int i = 0; i < resoults.size(); i++)
     {
+		cerr<<(i+1)*1000<<";";
         for(int j = 0; j < resoults[i].size(); j++)
         {
-            cerr<<resoults[i][j]<<";";
+            cerr<<(int)resoults[i][j]<<";";
         }
         cerr<<"\n";
     }
