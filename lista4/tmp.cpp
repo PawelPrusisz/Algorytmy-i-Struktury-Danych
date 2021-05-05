@@ -914,6 +914,7 @@ vector<string> loadFromFile(string fileName, int start, int end)
                     num++;
                     if(num > start && num<= end)
 					    out.push_back(line);
+						cout<<line<<"\n";
 					
 				}
         }
@@ -923,6 +924,7 @@ vector<string> loadFromFile(string fileName, int start, int end)
         cout<<"nieprawidlowa nazwa pliku\n";
     }
     random_shuffle(out.begin(), out.end());
+	cout<<"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
     return out;
 }
 vector<vector<float>> resoults(69, vector<float>(6, 0.0));

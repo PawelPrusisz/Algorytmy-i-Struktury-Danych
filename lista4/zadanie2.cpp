@@ -5,7 +5,7 @@
 using namespace std;
 
 vector<float> Timing(5, 0.0);
-int m = 1000;
+int m = 20;
 
 long long maxElements = 0;
 long long curElements = 0;
@@ -864,7 +864,7 @@ public:
 vector<string> loadFromFile(string fileName, int start, int end)
 {
     vector<string> out;
-	fileName = "lotr.txt";
+	fileName = "random.txt";
     ifstream myFile (fileName);
     string line;
 	if(fileName == "aspell_wordlist.txt")
@@ -874,6 +874,7 @@ vector<string> loadFromFile(string fileName, int start, int end)
 		{
 			while(getline(myFile, line))
 			{
+				//cout<<"line before: "<<line<<"\n";
 				bool ok = true;
 				for(int i = 0; i < line.size(); i++)
 				{
@@ -888,7 +889,11 @@ vector<string> loadFromFile(string fileName, int start, int end)
 				{
                     num++;
                     if(num > start && num<= end)
-					    out.push_back(line);
+					{
+						out.push_back(line);
+						//cout<<"line added: "<<line<<"\n";
+					}
+					    
 					
 				}
 			}
@@ -912,7 +917,7 @@ vector<string> loadFromFile(string fileName, int start, int end)
 				if(line.size() > 0 && ok)
 				{
                     num++;
-                    if(num > start && num<= end)
+                    if(num >= start && num< end)
 					    out.push_back(line);
 					
 				}
@@ -923,6 +928,7 @@ vector<string> loadFromFile(string fileName, int start, int end)
         cout<<"nieprawidlowa nazwa pliku\n";
     }
     //random_shuffle(out.begin(), out.end());
+	//cout<<"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
     return out;
 }
 vector<vector<float>> resoults(200, vector<float>(6, 0.0));
@@ -1003,13 +1009,14 @@ int main()
             {
                 intent =instructions[i];
                 if(intent == "end")break;
-                
+                //cout<<"-----------------------------------------------------------------------\n";
                 if(intent == "load")
                 {
                     if(curNum > 0)coutTime(curNum);
                     string fileName = "";
                     i++;
                     fileName = instructions[i];
+					//cout<<"\n\n\n\n\n\n\n\n"<<fileName<<"\n\n\n\n\n\n\n\n";
                     fromFile = loadFromFile(fileName, curNum, curNum+step);
                     curNum+=step;
                     

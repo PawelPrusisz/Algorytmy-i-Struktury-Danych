@@ -984,6 +984,7 @@ int main()
                     tree.insert(i);
 					inserts++;
 					curElements++;
+					cerr<<".";
                 }
 				if(curElements > maxElements)maxElements = curElements;
 				high_resolution_clock::time_point tEnd = high_resolution_clock::now();
