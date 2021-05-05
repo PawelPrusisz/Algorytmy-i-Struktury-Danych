@@ -19,7 +19,6 @@ long long successors = 0;
 long long inorders = 0;
 
 
-//ToDo : wypisz czas wywolania funkcji i porownania dla kadego rodzaju drzewa :((((
 
 //BST Tree
 //--------------------------------------------------------------------------------------------------------------------------------------
